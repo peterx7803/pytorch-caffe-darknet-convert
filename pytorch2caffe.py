@@ -279,7 +279,7 @@ if __name__ == '__main__':
 
            print 'load weights from ' + option
            m = torch.load(option)
-           m.eval() # very important here, otherwise batchnorm running_mean, running_var will be incorrect
+           #m.eval() # very important here, otherwise batchnorm running_mean, running_var will be incorrect
 	   input_var = Variable(torch.rand(1, 3, 224, 224))
 
            prototxt_name = option + '-pytorch2caffe.prototxt'
@@ -292,5 +292,5 @@ if __name__ == '__main__':
     print >> fp, dot
     fp.close()
     #exit(0)
-
+    #torch.save(m, 'Network_whole.pth')
     pytorch2caffe(input_var, output_var, prototxt_name, caffemodel_name)
