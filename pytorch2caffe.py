@@ -1,5 +1,8 @@
 import sys
-sys.path.append('/data/temp/caffe/python')
+
+caffe_root = '/home/peter/caffe/'  # this file should be run from {caffe_root}/examples (otherwise change this line)
+sys.path.insert(0, caffe_root + 'python')
+
 import caffe
 from collections import OrderedDict
 import torch.nn as nn
@@ -222,11 +225,65 @@ if __name__ == '__main__':
     import torchvision
     from visualize import make_dot
 
-    #m = torchvision.models.resnet50(pretrained=True)
-    m = torchvision.models.vgg16()
-    m.classifier.add_module('softmax', torch.nn.Softmax())
-    m.eval() # very important here, otherwise batchnorm running_mean, running_var will be incorrect
-    input_var = Variable(torch.rand(1, 3, 224, 224))
+    
+    if len(sys.argv) < 3: #len<2, no argument
+
+      print 'usage:'
+      print 'python pytorch-caffe-darknet-convert --[mode] --[modelname]'
+
+      print 'mode now support:'
+      print 'pretrained_convert, trained_convert)'
+      print 'Note that "pretrained_convert" mode not supprot for the model saved from .state_dict(), and the format supprot .pth'
+
+      print 'model now support:'
+      print 'Alexnet(alex), Vggnet-16(vgg16), Resnet-50(res50)'
+      sys.exit()
+
+
+    if sys.argv[1].startswith('--'):
+
+      mode = sys.argv[1][2:]
+      option = sys.argv[2][2:]
+
+
+      if mode == 'pretrained_convert':
+
+	      if option == 'vgg16':
+		m = torchvision.models.vgg16(pretrained=True)
+		m.classifier.add_module('softmax', torch.nn.Softmax())
+		m.eval() # very important here, otherwise batchnorm running_mean, running_var will be incorrect
+		input_var = Variable(torch.rand(1, 3, 224, 224))
+		model_name = 'vgg16'
+
+
+	      if option == 'res50':
+		m = torchvision.models.resnet50(pretrained=True)
+		#m.classifier.add_module('softmax', torch.nn.Softmax())
+		m.eval() # very important here, otherwise batchnorm running_mean, running_var will be incorrect
+		input_var = Variable(torch.rand(1, 3, 224, 224))
+		model_name = 'resnet50'
+
+
+	      if option == 'alex':
+		m = torchvision.models.alexnet(pretrained=True)
+		m.classifier.add_module('softmax', torch.nn.Softmax())
+		m.eval() # very important here, otherwise batchnorm running_mean, running_var will be incorrect
+		input_var = Variable(torch.rand(1, 3, 224, 224))
+		model_name = 'alexnet'
+
+
+              prototxt_name = model_name + '-pytorch2caffe.prototxt'
+              caffemodel_name = model_name  + '-pytorch2caffe.caffemodel'
+	
+      if mode == 'trained_convert':
+
+           print 'load weights from ' + option
+           m = torch.load(option)
+           m.eval() # very important here, otherwise batchnorm running_mean, running_var will be incorrect
+	   input_var = Variable(torch.rand(1, 3, 224, 224))
+
+           prototxt_name = option + '-pytorch2caffe.prototxt'
+           caffemodel_name = option  + '-pytorch2caffe.caffemodel'
 
     print(m)
     output_var = m(input_var)
@@ -236,5 +293,4 @@ if __name__ == '__main__':
     fp.close()
     #exit(0)
 
-    #pytorch2caffe(input_var, output_var, 'resnet50-pytorch2caffe.prototxt', 'resnet50-pytorch2caffe.caffemodel')
-    pytorch2caffe(input_var, output_var, 'vgg16-pytorch2caffe.prototxt', 'vgg16-pytorch2caffe.caffemodel')
+    pytorch2caffe(input_var, output_var, prototxt_name, caffemodel_name)
